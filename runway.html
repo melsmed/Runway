@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Runway — Capital Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  // Set theme before paint to avoid a flash.
+  try { var t = localStorage.getItem('runway.theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+</script>
+<style>
+:root{
+  /* Light is the base palette; dark overrides below. */
+  --bg:#eef1f5; --surface:#ffffff; --surface-2:#f6f8fb; --line:#dce1e9;
+  --text:#1a1f28; --muted:#5d6775; --faint:#98a1b0;
+  --accent:#a9781a; --accent-soft:rgba(169,120,26,.12); --accent-ink:#ffffff;
+  --ok:#2e8a6f; --ok-soft:rgba(46,138,111,.12); --danger:#c0453b; --danger-soft:rgba(192,69,59,.10);
+  --shadow:0 8px 30px rgba(20,30,50,.14);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+:root:not([data-theme="light"]){
+  @media (prefers-color-scheme: dark){
+    --bg:#12161d; --surface:#1a2029; --surface-2:#212934; --line:#2c3644;
+    --text:#e7ebf1; --muted:#939eae; --faint:#69737f;
+    --accent:#d4a938; --accent-soft:rgba(212,169,56,.14); --accent-ink:#17130a;
+    --ok:#43b892; --ok-soft:rgba(67,184,146,.14); --danger:#e0655a; --danger-soft:rgba(224,101,90,.14);
+    --shadow:0 10px 34px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12161d; --surface:#1a2029; --surface-2:#212934; --line:#2c3644;
+  --text:#e7ebf1; --muted:#939eae; --faint:#69737f;
+  --accent:#d4a938; --accent-soft:rgba(212,169,56,.14); --accent-ink:#17130a;
+  --ok:#43b892; --ok-soft:rgba(67,184,146,.14); --danger:#e0655a; --danger-soft:rgba(224,101,90,.14);
+  --shadow:0 10px 34px rgba(0,0,0,.5);
+}
+*{box-sizing:inherit}
+html,body{height:100%}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:"Schibsted Grotesk",system-ui,-apple-system,sans-serif;
+  font-size:14px; line-height:1.45; -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:14px}
+.tnum{font-variant-numeric:tabular-nums}
+
+#app{display:flex;flex-direction:column;height:100%;min-height:0}
+
+/* ---------- Top bar ---------- */
+.topbar{
+  display:flex;align-items:center;gap:22px;
+  padding:14px 20px;border-bottom:1px solid var(--line);
+  background:var(--surface);flex-wrap:wrap;
+}
+.brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.mark{width:14px;height:14px;transform:rotate(45deg);border-radius:3px;
+  background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 60%,#000));
+  box-shadow:0 0 0 3px var(--accent-soft)}
+.wordmark{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:22px;letter-spacing:-.01em}
+.stats{display:flex;gap:26px;flex:1;min-width:0;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;line-height:1.1}
+.stat .v{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:20px;letter-spacing:-.01em}
+.stat .k{font-size:11px;color:var(--muted);margin-top:2px}
+.stat.due .v{color:var(--danger)}
+.iconbtn{
+  border:1px solid var(--line);background:var(--surface-2);color:var(--muted);
+  width:36px;height:36px;border-radius:9px;font-size:16px;display:grid;place-items:center;
+}
+.iconbtn:hover{color:var(--text);border-color:var(--faint)}
+
+/* ---------- Toolbar ---------- */
+.toolbar{
+  display:flex;align-items:center;gap:10px;padding:12px 20px;flex-wrap:wrap;
+  border-bottom:1px solid var(--line);background:var(--bg);
+}
+.btn{
+  border:1px solid var(--line);background:var(--surface);color:var(--text);
+  padding:8px 13px;border-radius:9px;font-weight:500;font-size:13px;
+  display:inline-flex;align-items:center;gap:7px;
+}
+.btn:hover{border-color:var(--faint)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.primary:hover{filter:brightness(1.05)}
+.btn.ghost{background:transparent}
+.search{
+  flex:1;min-width:180px;max-width:340px;position:relative;display:flex;align-items:center;
+}
+.search input{
+  width:100%;padding:8px 12px 8px 32px;border:1px solid var(--line);border-radius:9px;
+  background:var(--surface);color:var(--text);
+}
+.search svg{position:absolute;left:10px;width:15px;height:15px;stroke:var(--faint);fill:none}
+select.filter{
+  padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--text);
+}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:transparent;color:var(--muted);padding:8px 13px;font-size:13px;font-weight:500}
+.seg button.on{background:var(--accent-soft);color:var(--accent)}
+.chk{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:13px;user-select:none}
+.chk input{accent-color:var(--accent)}
+
+/* ---------- Main ---------- */
+main{flex:1;min-height:0;overflow:hidden}
+
+/* Board */
+#board{height:100%;display:flex;gap:14px;overflow-x:auto;overflow-y:hidden;padding:16px 20px;scroll-snap-type:x proximity}
+.col{
+  flex:0 0 272px;display:flex;flex-direction:column;min-height:0;scroll-snap-align:start;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:14px;
+}
+.col-head{display:flex;align-items:center;gap:8px;padding:12px 14px 10px;border-bottom:1px solid var(--line)}
+.col-dot{width:8px;height:8px;border-radius:50%}
+.col-name{font-weight:600;font-size:13px}
+.col-count{color:var(--faint);font-size:12px}
+.col-sum{margin-left:auto;font-size:12px;color:var(--muted)}
+.col-body{flex:1;min-height:0;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:9px}
+.col.dragover{outline:2px dashed var(--accent);outline-offset:-4px}
+.col-empty{color:var(--faint);font-size:12px;text-align:center;padding:14px 8px;font-style:italic}
+
+.card{
+  background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--stage,#6b7686);
+  border-radius:10px;padding:11px 12px;cursor:pointer;position:relative;
+  transition:border-color .12s, transform .06s;
+}
+.card:hover{border-color:var(--faint)}
+.card:active{transform:scale(.995)}
+.card.dragging{opacity:.5}
+.card .co{font-weight:600;font-size:14px;letter-spacing:-.01em;line-height:1.25}
+.card .who{color:var(--muted);font-size:12px;margin-top:1px}
+.card .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.pchip{font-size:11px;padding:2px 7px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted)}
+.card .foot{display:flex;align-items:center;gap:8px;margin-top:9px}
+.card .size{font-weight:600;font-size:13px}
+.card .size.tnum{}
+.due{margin-left:auto;font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px}
+.due.over{background:var(--danger-soft);color:var(--danger)}
+.due.today{background:var(--accent-soft);color:var(--accent)}
+
+/* List */
+#list{height:100%;overflow:auto;padding:8px 20px 20px}
+table{width:100%;border-collapse:collapse}
+thead th{
+  position:sticky;top:0;background:var(--bg);text-align:left;font-size:11px;color:var(--muted);
+  font-weight:600;padding:10px 10px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1;
+}
+tbody td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--surface-2)}
+.stgpill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500}
+.stgpill .col-dot{width:7px;height:7px}
+td .co{font-weight:600}
+td .who{color:var(--muted);font-size:12px}
+
+/* Empty state */
+.empty{height:100%;display:grid;place-items:center;padding:24px}
+.empty .inner{max-width:380px;text-align:center}
+.empty h2{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:24px;margin:0 0 8px;letter-spacing:-.01em}
+.empty p{color:var(--muted);margin:0 0 18px}
+
+/* ---------- Drawer ---------- */
+.scrim{position:fixed;inset:0;background:rgba(10,14,20,.5);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{
+  position:fixed;top:0;right:0;height:100%;width:min(480px,100%);z-index:50;
+  background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--shadow);
+  transform:translateX(100%);transition:transform .24s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.drawer.on{transform:none}
+.dw-head{display:flex;align-items:flex-start;gap:10px;padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+.dw-title{flex:1;min-width:0}
+.dw-title input.co{
+  font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:22px;letter-spacing:-.01em;
+  border:0;background:transparent;color:var(--text);width:100%;padding:2px 0;
+}
+.dw-title input.co::placeholder{color:var(--faint)}
+.dw-sub{display:flex;gap:8px;margin-top:4px}
+.dw-sub input{border:0;background:transparent;color:var(--muted);font-size:13px;padding:2px 0}
+.dw-body{flex:1;overflow-y:auto;padding:6px 20px 24px}
+.dw-close{border:1px solid var(--line);background:var(--surface-2);color:var(--muted);width:32px;height:32px;border-radius:8px;font-size:18px;line-height:1}
+.dw-close:hover{color:var(--text)}
+
+.field{margin-top:16px}
+.field > label{display:block;font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px}
+.field input[type=text],.field input[type=number],.field input[type=date],.field select,.field textarea{
+  width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--text);
+}
+.field textarea{resize:vertical;min-height:64px;line-height:1.5}
+.row2{display:flex;gap:12px}
+.row2 .field{flex:1;min-width:0}
+.prods{display:flex;flex-wrap:wrap;gap:7px}
+.prods button{
+  border:1px solid var(--line);background:var(--surface-2);color:var(--muted);
+  padding:6px 10px;border-radius:8px;font-size:12px;font-weight:500;
+}
+.prods button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+
+/* Activity */
+.acts{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.act{display:flex;gap:9px;font-size:13px}
+.act .dot{width:6px;height:6px;border-radius:50%;background:var(--faint);margin-top:6px;flex-shrink:0}
+.act .txt{flex:1}
+.act .ts{color:var(--faint);font-size:11px;margin-top:1px}
+.addnote{display:flex;gap:8px;margin-top:10px}
+.addnote input{flex:1}
+
+/* AI desk */
+.desk{margin-top:22px;border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--surface-2)}
+.desk-head{display:flex;align-items:center;gap:9px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.desk-head .mark{width:11px;height:11px;box-shadow:none}
+.desk-head b{font-size:13px;font-weight:600}
+.desk-head .hint{margin-left:auto;font-size:11px;color:var(--faint)}
+.desk-acts{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px}
+.desk-acts .btn{font-size:12px;padding:7px 11px;background:var(--surface)}
+.desk-out{padding:0 14px 14px;display:none}
+.desk-out.on{display:block}
+.desk-out .bubble{
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 13px;
+  white-space:pre-wrap;font-size:13.5px;line-height:1.55;min-height:20px;
+}
+.desk-out .bubble.thinking{color:var(--muted);font-style:italic}
+.desk-tools{display:flex;align-items:center;gap:10px;margin-top:9px}
+.desk-tools .link{background:transparent;border:0;color:var(--accent);font-weight:600;font-size:12px;padding:0}
+.desk-tools .link:hover{text-decoration:underline}
+.desk-guard{font-size:11px;color:var(--faint);margin-top:9px;display:flex;align-items:center;gap:6px}
+.desk-guard::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.desk-off{padding:12px 14px;font-size:12px;color:var(--faint)}
+
+.dw-foot{padding:12px 20px;border-top:1px solid var(--line);display:flex}
+.del{background:transparent;border:1px solid var(--line);color:var(--danger);padding:8px 12px;border-radius:9px;font-size:13px;font-weight:500}
+.del:hover{background:var(--danger-soft)}
+
+/* Toast */
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+  background:var(--text);color:var(--bg);padding:9px 16px;border-radius:10px;font-size:13px;font-weight:500;
+  opacity:0;pointer-events:none;transition:.2s;z-index:60;
+  margin-bottom:env(safe-area-inset-bottom,0px);
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media (max-width:640px){
+  .topbar{gap:14px;padding:12px 14px}
+  .stats{gap:18px}
+  .toolbar{padding:10px 14px}
+  #board{padding:14px}
+  #list{padding:8px 14px 16px}
+  .hide-sm{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand"><span class="mark"></span><span class="wordmark">Runway</span></div>
+    <div class="stats" id="stats"></div>
+    <button class="iconbtn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">◐</button>
+  </header>
+
+  <div class="toolbar">
+    <button class="btn primary" id="newBtn">＋ New lead</button>
+    <label class="search">
+      <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="search" placeholder="Search company, contact, notes…" autocomplete="off">
+    </label>
+    <select class="filter hide-sm" id="prodFilter"><option value="">All products</option></select>
+    <div class="seg" id="viewSeg">
+      <button data-view="board" class="on">Board</button>
+      <button data-view="list">List</button>
+    </div>
+    <label class="chk hide-sm"><input type="checkbox" id="showLost"> Show lost</label>
+  </div>
+
+  <main id="main"></main>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true"></aside>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ---------------- Model ---------------- */
+const PRODUCTS = ["SBA Loan","Term Loan","Equipment","Line of Credit","A/R Financing","MCA","Consolidation","DSCR"];
+const STAGES = [
+  {id:"new",label:"New",color:"#6b7686"},
+  {id:"contacted",label:"Contacted",color:"#4f7bb0"},
+  {id:"replied",label:"Replied",color:"#7a6bb0"},
+  {id:"call",label:"Call Booked",color:"#c08a2e"},
+  {id:"app",label:"App In",color:"#3f9d84"},
+  {id:"funded",label:"Funded",color:"#2e8a6f"},
+];
+const LOST = {id:"lost",label:"Lost",color:"#a05046"};
+const STAGE_BY = Object.fromEntries([...STAGES,LOST].map(s=>[s.id,s]));
+const CHANNELS = ["Instagram","LinkedIn","Referral","Cold email","Event","Inbound","Other"];
+const INDUSTRIES = ["Contractor / trades","Manufacturer","Professional services","Healthcare / practice","Restaurant / hospitality","E-commerce / retail","Logistics / transport","RE investor / syndicate","SaaS / tech","Other"];
+
+const state = { leads:new Map(), view:"board", q:"", prod:"", showLost:false, openId:null };
+let AI_ON = true;
+
+/* ---------------- Utilities ---------------- */
+const $ = s => document.querySelector(s);
+const el = (tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;};
+const esc = s => (s==null?"":String(s));
+const uid = () => (crypto?.randomUUID?.() || ("id"+Date.now()+Math.random().toString(16).slice(2)));
+const todayISO = () => new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+function money(n){ n=Number(n); if(!n) return "—"; return "$"+Math.round(n).toLocaleString(); }
+function moneyShort(n){ n=Number(n)||0; if(n>=1e6) return "$"+(n/1e6).toFixed(n%1e6?1:0)+"M"; if(n>=1e3) return "$"+Math.round(n/1e3)+"k"; return "$"+Math.round(n); }
+function dueState(l){
+  if(!l.nextFollowUp || l.stage==="funded" || l.stage==="lost") return null;
+  const t=todayISO(); if(l.nextFollowUp<t) return "over"; if(l.nextFollowUp===t) return "today"; return null;
+}
+function fmtDate(d){ if(!d) return "—"; const [y,m,dd]=d.split("-"); return `${m}/${dd}/${y.slice(2)}`; }
+function relTime(ts){
+  const s=(Date.now()-ts)/1000;
+  if(s<60) return "just now"; if(s<3600) return Math.floor(s/60)+"m ago";
+  if(s<86400) return Math.floor(s/3600)+"h ago";
+  const d=Math.floor(s/86400); if(d<30) return d+"d ago";
+  return new Date(ts).toLocaleDateString();
+}
+let toastT;
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("on"),1800); }
+
+/* ---------------- Storage (this device) ---------------- */
+const LS_KEY="runway.leads.v1";
+function loadLocal(){
+  try{ const a=JSON.parse(localStorage.getItem(LS_KEY)||"[]"); state.leads=new Map(a.map(l=>[l.id,l])); }
+  catch(e){ state.leads=new Map(); }
+  render();
+}
+function persistLocal(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify([...state.leads.values()])); }catch(e){}
+}
+function initStorage(){ loadLocal(); }
+async function saveLead(l){
+  l.updatedAt=Date.now();
+  state.leads.set(l.id,l);
+  render();
+  persistLocal();
+}
+async function deleteLead(id){
+  state.leads.delete(id);
+  persistLocal();
+  render();
+}
+
+/* ---------------- Derived ---------------- */
+function visibleLeads(){
+  const q=state.q.trim().toLowerCase();
+  return [...state.leads.values()].filter(l=>{
+    if(l.stage==="lost" && !state.showLost) return false;
+    if(state.prod && !(l.products||[]).includes(state.prod)) return false;
+    if(q){
+      const hay=[l.company,l.contact,l.role,l.handle,l.industry,l.need,l.notes].join(" ").toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+function computeStats(){
+  let open=0,funded=0,active=0,due=0;
+  for(const l of state.leads.values()){
+    if(l.stage==="lost") continue;
+    if(l.stage==="funded"){ funded+=Number(l.dealSize)||0; continue; }
+    open+=Number(l.dealSize)||0; active++;
+    if(dueState(l)) due++;
+  }
+  return {open,funded,active,due};
+}
+
+/* ---------------- Render: top ---------------- */
+function renderStats(){
+  const s=computeStats();
+  $("#stats").innerHTML="";
+  const add=(v,k,cls)=>{ const d=el("div","stat"+(cls?" "+cls:"")); d.innerHTML=`<span class="v tnum">${v}</span><span class="k">${k}</span>`; $("#stats").appendChild(d); };
+  add(moneyShort(s.open),"Open pipeline");
+  add(s.active,"Active leads");
+  add(s.due,"Follow-ups due", s.due?"due":"");
+  add(moneyShort(s.funded),"Funded");
+}
+
+/* ---------------- Render: main ---------------- */
+function render(){
+  renderStats();
+  const main=$("#main");
+  if(state.leads.size===0){ renderEmpty(main); return; }
+  if(state.view==="board") renderBoard(main); else renderList(main);
+}
+function renderEmpty(main){
+  main.innerHTML="";
+  const w=el("div","empty");
+  w.innerHTML=`<div class="inner">
+    <h2>Your desk is clear.</h2>
+    <p>Add your first prospect to open the pipeline. Every lead you log becomes a card you can move from first touch to funded.</p>
+  </div>`;
+  const b=el("button","btn primary","＋ New lead"); b.onclick=openNew;
+  w.querySelector(".inner").appendChild(b);
+  main.appendChild(w);
+}
+function renderBoard(main){
+  main.innerHTML="";
+  const board=el("div"); board.id="board";
+  const leads=visibleLeads();
+  const cols=[...STAGES]; if(state.showLost) cols.push(LOST);
+  for(const st of cols){
+    const items=leads.filter(l=>l.stage===st.id).sort(sortLeads);
+    const sum=items.reduce((a,l)=>a+(Number(l.dealSize)||0),0);
+    const col=el("div","col"); col.dataset.stage=st.id;
+    const head=el("div","col-head");
+    head.innerHTML=`<span class="col-dot" style="background:${st.color}"></span><span class="col-name">${st.label}</span><span class="col-count">${items.length}</span><span class="col-sum tnum">${sum?moneyShort(sum):""}</span>`;
+    col.appendChild(head);
+    const body=el("div","col-body");
+    if(!items.length) body.appendChild(el("div","col-empty","—"));
+    items.forEach(l=>body.appendChild(cardEl(l)));
+    col.appendChild(body);
+    // drag targets
+    col.addEventListener("dragover",e=>{e.preventDefault();col.classList.add("dragover");});
+    col.addEventListener("dragleave",()=>col.classList.remove("dragover"));
+    col.addEventListener("drop",e=>{
+      e.preventDefault();col.classList.remove("dragover");
+      const id=e.dataTransfer.getData("text/plain"); moveStage(id,st.id);
+    });
+    board.appendChild(col);
+  }
+  main.appendChild(board);
+}
+function sortLeads(a,b){
+  const da=dueState(a),db=dueState(b);
+  const rank=x=>x==="over"?0:x==="today"?1:2;
+  if(rank(da)!==rank(db)) return rank(da)-rank(db);
+  return (b.updatedAt||0)-(a.updatedAt||0);
+}
+function cardEl(l){
+  const st=STAGE_BY[l.stage]||STAGES[0];
+  const c=el("div","card"); c.style.setProperty("--stage",st.color);
+  c.draggable=true; c.dataset.id=l.id;
+  const prods=(l.products||[]);
+  const chips=prods.slice(0,2).map(p=>`<span class="pchip">${esc(p)}</span>`).join("")+(prods.length>2?`<span class="pchip">+${prods.length-2}</span>`:"");
+  const ds=dueState(l);
+  const due=ds?`<span class="due ${ds}">${ds==="over"?"Overdue":"Due today"}</span>`:"";
+  c.innerHTML=`<div class="co">${esc(l.company)||"<span style='color:var(--faint)'>Untitled</span>"}</div>
+    ${l.contact?`<div class="who">${esc(l.contact)}${l.role?" · "+esc(l.role):""}</div>`:""}
+    ${chips?`<div class="chips">${chips}</div>`:""}
+    <div class="foot"><span class="size tnum">${money(l.dealSize)}</span>${due}</div>`;
+  c.onclick=()=>openLead(l.id);
+  c.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain",l.id);e.dataTransfer.effectAllowed="move";c.classList.add("dragging");});
+  c.addEventListener("dragend",()=>c.classList.remove("dragging"));
+  return c;
+}
+function renderList(main){
+  main.innerHTML="";
+  const wrap=el("div"); wrap.id="list";
+  const leads=visibleLeads().sort((a,b)=>{
+    const da=a.nextFollowUp||"9999", db=b.nextFollowUp||"9999";
+    if(da!==db) return da<db?-1:1;
+    return (b.updatedAt||0)-(a.updatedAt||0);
+  });
+  const t=el("table");
+  t.innerHTML=`<thead><tr>
+    <th>Company</th><th>Stage</th><th class="hide-sm">Products</th><th>Size</th><th>Follow-up</th></tr></thead>`;
+  const tb=el("tbody");
+  leads.forEach(l=>{
+    const st=STAGE_BY[l.stage]||STAGES[0];
+    const ds=dueState(l);
+    const tr=el("tr"); tr.onclick=()=>openLead(l.id);
+    tr.innerHTML=`<td><div class="co">${esc(l.company)||"Untitled"}</div>${l.contact?`<div class="who">${esc(l.contact)}${l.role?" · "+esc(l.role):""}</div>`:""}</td>
+      <td><span class="stgpill"><span class="col-dot" style="background:${st.color}"></span>${st.label}</span></td>
+      <td class="hide-sm"><span style="color:var(--muted);font-size:12px">${(l.products||[]).join(", ")||"—"}</span></td>
+      <td class="tnum">${money(l.dealSize)}</td>
+      <td class="tnum" style="${ds==='over'?'color:var(--danger);font-weight:600':ds==='today'?'color:var(--accent);font-weight:600':''}">${fmtDate(l.nextFollowUp)}</td>`;
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb); wrap.appendChild(t);
+  if(!leads.length){ wrap.appendChild(el("div","col-empty","No leads match your filters.")); }
+  main.appendChild(wrap);
+}
+function moveStage(id,stage){
+  const l=state.leads.get(id); if(!l||l.stage===stage) return;
+  l.stage=stage;
+  l.activity=(l.activity||[]).concat({ts:Date.now(),text:"Moved to "+(STAGE_BY[stage]?.label||stage)}).slice(-60);
+  saveLead(l);
+  if(state.openId===id) renderDrawer();
+}
+
+/* ---------------- Drawer ---------------- */
+let current=null, isNew=false, aiCtl=null;
+function openNew(){
+  current={ id:uid(), company:"", contact:"", role:"", channel:"", handle:"", industry:"",
+    need:"", products:[], dealSize:"", stage:"new", nextFollowUp:"", notes:"", activity:[], createdAt:Date.now() };
+  isNew=true; state.openId=current.id; renderDrawer(); showDrawer(true);
+  setTimeout(()=>$("#drawer").querySelector("input.co")?.focus(),260);
+}
+function openLead(id){
+  const l=state.leads.get(id); if(!l) return;
+  current=JSON.parse(JSON.stringify(l)); isNew=false; state.openId=id;
+  renderDrawer(); showDrawer(true);
+}
+function showDrawer(on){
+  $("#drawer").classList.toggle("on",on);
+  $("#scrim").classList.toggle("on",on);
+  $("#drawer").setAttribute("aria-hidden",on?"false":"true");
+}
+function closeDrawer(){
+  // discard an untouched brand-new lead
+  showDrawer(false); state.openId=null;
+  if(aiCtl){aiCtl.abort();aiCtl=null;}
+  current=null; isNew=false;
+}
+function commit(){
+  if(isNew){ isNew=false; }
+  saveLead(current);
+}
+function renderDrawer(){
+  const d=$("#drawer");
+  const l=current; if(!l) return;
+  const prodOpts=PRODUCTS.map(p=>`<button data-prod="${p}" class="${(l.products||[]).includes(p)?"on":""}">${p}</button>`).join("");
+  const chanOpts=`<option value="">Channel…</option>`+CHANNELS.map(c=>`<option ${l.channel===c?"selected":""}>${c}</option>`).join("");
+  const indList=INDUSTRIES.map(i=>`<option value="${i}">`).join("");
+  const stageOpts=STAGES.concat(LOST).map(s=>`<option value="${s.id}" ${l.stage===s.id?"selected":""}>${s.label}</option>`).join("");
+  const acts=(l.activity||[]).slice().reverse().map(a=>`<div class="act"><span class="dot"></span><div class="txt">${esc(a.text)}<div class="ts">${relTime(a.ts)}</div></div></div>`).join("")||`<div class="col-empty" style="text-align:left;padding:4px 0">No activity yet.</div>`;
+
+  const deskInner = AI_ON
+    ? `<div style="padding:11px 14px 0;font-size:12px;color:var(--muted);line-height:1.5">Tap a task to copy a ready, guardrailed prompt for this lead — paste it into Claude and it'll draft in your voice.</div>
+       <div class="desk-acts">
+         <button class="btn" data-ai="opener">✍ Opener prompt</button>
+         <button class="btn" data-ai="fit">◆ Instrument fit</button>
+         <button class="btn" data-ai="next">➤ Next move</button>
+       </div>
+       <div class="desk-out" id="deskOut">
+         <div class="bubble" id="deskBubble"></div>
+         <div class="desk-tools">
+           <button class="link" id="deskCopy">Copy again</button>
+           <button class="link" id="deskStop" style="display:none">Stop</button>
+         </div>
+         <div class="desk-guard">Guardrailed — no approval, rate, or income promises</div>
+       </div>`
+    : `<div class="desk-off">Ask Claude to draft outreach for any lead.</div>`;
+
+  d.innerHTML=`
+    <div class="dw-head">
+      <div class="dw-title">
+        <input class="co" data-f="company" placeholder="Company name" value="${esc(l.company)}">
+        <div class="dw-sub">
+          <input data-f="contact" placeholder="Contact" value="${esc(l.contact)}" style="flex:1">
+          <input data-f="role" placeholder="Role" value="${esc(l.role)}" style="flex:1">
+        </div>
+      </div>
+      <button class="dw-close" id="dwClose" aria-label="Close">×</button>
+    </div>
+    <div class="dw-body">
+      <div class="row2">
+        <div class="field"><label>Stage</label><select data-f="stage">${stageOpts}</select></div>
+        <div class="field"><label>Deal size (USD)</label><input type="number" data-f="dealSize" placeholder="0" value="${esc(l.dealSize)}"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Channel</label><select data-f="channel">${chanOpts}</select></div>
+        <div class="field"><label>Handle / link</label><input type="text" data-f="handle" placeholder="@ or url" value="${esc(l.handle)}"></div>
+      </div>
+      <div class="field"><label>Industry</label><input type="text" data-f="industry" list="indList" placeholder="e.g. RE investor / syndicate" value="${esc(l.industry)}"><datalist id="indList">${indList}</datalist></div>
+      <div class="field"><label>Products in play</label><div class="prods">${prodOpts}</div></div>
+      <div class="field"><label>Situation / need</label><textarea data-f="need" placeholder="What's driving the conversation — scaling, cash-flow gap, stacked positions, acquisition…">${esc(l.need)}</textarea></div>
+      <div class="field"><label>Next follow-up</label><input type="date" data-f="nextFollowUp" value="${esc(l.nextFollowUp)}"></div>
+      <div class="field"><label>Notes</label><textarea data-f="notes" placeholder="Anything worth remembering">${esc(l.notes)}</textarea></div>
+
+      <div class="field"><label>Activity</label>
+        <div class="acts">${acts}</div>
+        <div class="addnote"><input type="text" id="noteInput" placeholder="Log a call, reply, update…"><button class="btn" id="noteAdd">Add</button></div>
+      </div>
+
+      <div class="desk">
+        <div class="desk-head"><span class="mark"></span><b>Desk analyst</b><span class="hint">ready prompts for Claude</span></div>
+        ${deskInner}
+      </div>
+    </div>
+    <div class="dw-foot"><button class="del" id="dwDelete">Delete lead</button></div>
+  `;
+
+  // wire fields
+  d.querySelectorAll("[data-f]").forEach(inp=>{
+    const f=inp.dataset.f;
+    const ev = (inp.tagName==="SELECT"||inp.type==="date"||inp.type==="number")?"change":"input";
+    inp.addEventListener(ev,()=>{
+      let v=inp.value;
+      current[f]=v;
+      if(f==="stage"){
+        current.activity=(current.activity||[]).concat({ts:Date.now(),text:"Moved to "+(STAGE_BY[v]?.label||v)}).slice(-60);
+      }
+      // debounce text saves lightly
+      if(ev==="input"){ clearTimeout(inp._t); inp._t=setTimeout(commit,400); }
+      else { commit(); if(f==="stage") renderDrawer(); }
+    });
+  });
+  d.querySelectorAll("[data-prod]").forEach(b=>{
+    b.onclick=()=>{ const p=b.dataset.prod; const set=new Set(current.products||[]);
+      set.has(p)?set.delete(p):set.add(p); current.products=[...set];
+      b.classList.toggle("on"); commit(); };
+  });
+  $("#dwClose").onclick=closeDrawer;
+  $("#dwDelete").onclick=()=>{ if(!isNew && !confirm("Delete this lead? This can't be undone.")) return; const id=current.id; closeDrawer(); if(!isNew) deleteLead(id); };
+  const ni=$("#noteInput"), na=$("#noteAdd");
+  const addNote=()=>{ const t=ni.value.trim(); if(!t) return; current.activity=(current.activity||[]).concat({ts:Date.now(),text:t}).slice(-60); ni.value=""; commit(); renderDrawer(); setTimeout(()=>$("#noteInput")?.focus(),0); };
+  na.onclick=addNote; ni.addEventListener("keydown",e=>{if(e.key==="Enter")addNote();});
+  // AI
+  d.querySelectorAll("[data-ai]").forEach(b=> b.onclick=()=>runAI(b.dataset.ai));
+  const cp=$("#deskCopy"); if(cp) cp.onclick=()=>{ const t=$("#deskBubble")?.textContent||""; if(t){navigator.clipboard?.writeText(t); toast("Copied");} };
+}
+
+/* ---------------- AI desk (copy a ready prompt for Claude) ---------------- */
+function leadBrief(l){
+  const parts=[
+    `Company: ${l.company||"(unknown)"}`,
+    l.contact?`Contact: ${l.contact}${l.role?", "+l.role:""}`:"",
+    l.industry?`Industry: ${l.industry}`:"",
+    l.channel?`Channel: ${l.channel}`:"",
+    (l.products||[]).length?`Products in play: ${(l.products||[]).join(", ")}`:"",
+    l.dealSize?`Est. capital need: $${Number(l.dealSize).toLocaleString()}`:"",
+    `Pipeline stage: ${STAGE_BY[l.stage]?.label||l.stage}`,
+    l.need?`Situation: ${l.need}`:"",
+    l.notes?`Notes: ${l.notes}`:"",
+  ].filter(Boolean);
+  const log=(l.activity||[]).slice(-6).map(a=>`- ${a.text}`).join("\n");
+  return parts.join("\n")+(log?`\nRecent activity:\n${log}`:"");
+}
+const DESK_CONTEXT =
+`You are the desk analyst for a capital advisory / commercial finance operation. The operator advises small-to-medium businesses and real estate investors and matches them to financial instruments, positioning capital as leverage, liquidity, and operational breathing room — never selling "debt."
+
+Toolkit: SBA loans (major expansion / acquisition), Term Loans (predictable growth investment), Equipment Financing (asset acquisition), Business Line of Credit (on-demand liquidity), A/R / Invoice Financing (unlock stuck receivables), MCA (fast tactical bridge capital), Consolidation Financing (clean up stacked positions to restore monthly margin), DSCR real-estate loans (qualify on the property's cash flow, non-recourse wealth building).
+
+Voice: authoritative, sophisticated, metric-driven, yet down-to-earth and authentic. Peer-to-peer with serious business owners. Raw and genuine, zero fluff, no hype-beast energy. Urgency comes from the reality of the numbers, not loud pressure.
+
+COMPLIANCE — non-negotiable: never promise or imply approval or guaranteed funding; never state or imply specific rates, terms, or amounts; never make income, return, or savings guarantees. No "guaranteed," no "you'll qualify," no invented numbers. Keep every claim defensible and consultative.`;
+
+const AI_TASKS = {
+  opener: b => `${DESK_CONTEXT}\n\nLead:\n${b}\n\nTask: Write a first-touch DM to this lead. One message, 3–5 sentences. It must sound like a real human text — unforced, no template feel, no "I hope this finds you well." Lead with their business reality, not a pitch. End with one low-pressure, consultative question that invites a reply. Personalize using the details above. Output ONLY the message text, nothing else.`,
+  fit: b => `${DESK_CONTEXT}\n\nLead:\n${b}\n\nTask: Recommend the 1–2 instruments from the toolkit that best fit this situation. For each: name it, then one sentence on why it fits their reality. Then one short line on what to confirm with them next to validate the fit. Be concise and specific to this lead. No preamble.`,
+  next: b => `${DESK_CONTEXT}\n\nLead:\n${b}\n\nTask: Given the stage and recent activity, state the single best next move and when to make it (one line), then draft the exact short message to send now. Keep the message tight and in-voice. Format:\nMove: ...\nMessage:\n...`,
+};
+async function runAI(kind){
+  if(!current) return;
+  const out=$("#deskOut"), bubble=$("#deskBubble"), stop=$("#deskStop");
+  out.classList.add("on");
+  stop.style.display="none";
+  const prompt=AI_TASKS[kind](leadBrief(current));
+  bubble.textContent=prompt;
+  try{ await navigator.clipboard.writeText(prompt); toast("Prompt copied — paste it to Claude to draft"); }
+  catch(e){ toast("Select the text below and copy it to Claude"); }
+}
+
+/* ---------------- Toolbar / theme wiring ---------------- */
+$("#newBtn").onclick=openNew;
+$("#scrim").onclick=closeDrawer;
+document.addEventListener("keydown",e=>{ if(e.key==="Escape" && state.openId) closeDrawer(); });
+$("#search").addEventListener("input",e=>{ state.q=e.target.value; render(); });
+$("#prodFilter").addEventListener("change",e=>{ state.prod=e.target.value; render(); });
+$("#showLost").addEventListener("change",e=>{ state.showLost=e.target.checked; render(); });
+$("#viewSeg").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return;
+  state.view=b.dataset.view; $("#viewSeg").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); render(); });
+// product filter options
+PRODUCTS.forEach(p=>{ const o=el("option",null,p); o.value=p; $("#prodFilter").appendChild(o); });
+
+function effectiveTheme(){
+  const set=document.documentElement.getAttribute("data-theme");
+  if(set) return set;
+  return matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";
+}
+$("#themeBtn").onclick=()=>{
+  const next=effectiveTheme()==="dark"?"light":"dark";
+  document.documentElement.setAttribute("data-theme",next);
+  try{ localStorage.setItem("runway.theme",next); }catch(e){}
+};
+
+/* ---------------- Boot ---------------- */
+render();
+initStorage();
+</script>
+</body>
+</html>
