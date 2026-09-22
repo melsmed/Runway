@@ -134,6 +134,12 @@ main{flex:1;min-height:0;overflow:hidden}
 .card.dragging{opacity:.5}
 .card .co{font-weight:600;font-size:14px;letter-spacing:-.01em;line-height:1.25}
 .card .who{color:var(--muted);font-size:12px;margin-top:1px}
+.card .cline{font-size:12px;margin-top:4px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .cline a{color:var(--muted);text-decoration:none}
+.card .cline a:hover{color:var(--accent)}
+.cstack{display:flex;flex-direction:column;gap:2px;font-size:12px}
+.cstack a{color:var(--muted);text-decoration:none;white-space:nowrap}
+.cstack a:hover{color:var(--accent)}
 .card .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
 .pchip{font-size:11px;padding:2px 7px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted)}
 .card .foot{display:flex;align-items:center;gap:8px;margin-top:9px}
@@ -442,6 +448,13 @@ function sortLeads(a,b){
   if(rank(da)!==rank(db)) return rank(da)-rank(db);
   return (b.updatedAt||0)-(a.updatedAt||0);
 }
+function telHref(p){ return "tel:"+String(p).replace(/[^\d+]/g,""); }
+function contactBits(l){
+  const b=[];
+  if(l.phone) b.push(`<a href="${telHref(l.phone)}" onclick="event.stopPropagation()">${esc(l.phone)}</a>`);
+  if(l.email) b.push(`<a href="mailto:${esc(l.email)}" onclick="event.stopPropagation()">${esc(l.email)}</a>`);
+  return b;
+}
 function cardEl(l){
   const st=STAGE_BY[l.stage]||STAGES[0];
   const c=el("div","card"); c.style.setProperty("--stage",st.color);
@@ -452,6 +465,7 @@ function cardEl(l){
   const due=ds?`<span class="due ${ds}">${ds==="over"?"Overdue":"Due today"}</span>`:"";
   c.innerHTML=`<div class="co">${esc(l.company)||"<span style='color:var(--faint)'>Untitled</span>"}</div>
     ${l.contact?`<div class="who">${esc(l.contact)}${l.role?" · "+esc(l.role):""}</div>`:""}
+    ${(l.phone||l.email)?`<div class="cline">${contactBits(l).join(" · ")}</div>`:""}
     ${chips?`<div class="chips">${chips}</div>`:""}
     <div class="foot"><span class="size tnum">${money(l.dealSize)}</span>${due}</div>`;
   c.onclick=()=>openLead(l.id);
@@ -469,13 +483,14 @@ function renderList(main){
   });
   const t=el("table");
   t.innerHTML=`<thead><tr>
-    <th>Company</th><th>Stage</th><th class="hide-sm">Products</th><th>Size</th><th>Follow-up</th></tr></thead>`;
+    <th>Company</th><th>Contact</th><th>Stage</th><th class="hide-sm">Products</th><th>Size</th><th>Follow-up</th></tr></thead>`;
   const tb=el("tbody");
   leads.forEach(l=>{
     const st=STAGE_BY[l.stage]||STAGES[0];
     const ds=dueState(l);
     const tr=el("tr"); tr.onclick=()=>openLead(l.id);
     tr.innerHTML=`<td><div class="co">${esc(l.company)||"Untitled"}</div>${l.contact?`<div class="who">${esc(l.contact)}${l.role?" · "+esc(l.role):""}</div>`:""}</td>
+      <td>${(l.phone||l.email)?`<div class="cstack">${contactBits(l).join("")}</div>`:'<span style="color:var(--faint)">—</span>'}</td>
       <td><span class="stgpill"><span class="col-dot" style="background:${st.color}"></span>${st.label}</span></td>
       <td class="hide-sm"><span style="color:var(--muted);font-size:12px">${(l.products||[]).join(", ")||"—"}</span></td>
       <td class="tnum">${money(l.dealSize)}</td>
@@ -497,7 +512,8 @@ function moveStage(id,stage){
 /* ---------------- Drawer ---------------- */
 let current=null, isNew=false, aiCtl=null;
 function openNew(){
-  current={ id:uid(), company:"", contact:"", role:"", channel:"", handle:"", industry:"",
+  current={ id:uid(), company:"", contact:"", role:"", phone:"", email:"", location:"", fico:"", ownership:"",
+    channel:"", handle:"", industry:"",
     need:"", products:[], dealSize:"", stage:"new", nextFollowUp:"", notes:"", activity:[], createdAt:Date.now() };
   isNew=true; state.openId=current.id; renderDrawer(); showDrawer(true);
   setTimeout(()=>$("#drawer").querySelector("input.co")?.focus(),260);
@@ -561,6 +577,14 @@ function renderDrawer(){
     </div>
     <div class="dw-body">
       <div class="row2">
+        <div class="field"><label>Phone</label><input type="tel" data-f="phone" placeholder="(555) 555-5555" value="${esc(l.phone)}"></div>
+        <div class="field"><label>Email</label><input type="email" data-f="email" placeholder="name@company.com" value="${esc(l.email)}"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Location</label><input type="text" data-f="location" placeholder="City, State" value="${esc(l.location)}"></div>
+        <div class="field"><label>Length of ownership</label><input type="text" data-f="ownership" placeholder="e.g. 3 years" value="${esc(l.ownership)}"></div>
+      </div>
+      <div class="row2">
         <div class="field"><label>Stage</label><select data-f="stage">${stageOpts}</select></div>
         <div class="field"><label>Deal size (USD)</label><input type="number" data-f="dealSize" placeholder="0" value="${esc(l.dealSize)}"></div>
       </div>
@@ -568,7 +592,10 @@ function renderDrawer(){
         <div class="field"><label>Channel</label><select data-f="channel">${chanOpts}</select></div>
         <div class="field"><label>Handle / link</label><input type="text" data-f="handle" placeholder="@ or url" value="${esc(l.handle)}"></div>
       </div>
-      <div class="field"><label>Industry</label><input type="text" data-f="industry" list="indList" placeholder="e.g. RE investor / syndicate" value="${esc(l.industry)}"><datalist id="indList">${indList}</datalist></div>
+      <div class="row2">
+        <div class="field"><label>Industry</label><input type="text" data-f="industry" list="indList" placeholder="e.g. RE investor / syndicate" value="${esc(l.industry)}"><datalist id="indList">${indList}</datalist></div>
+        <div class="field"><label>FICO score</label><input type="number" data-f="fico" min="300" max="850" placeholder="300–850" value="${esc(l.fico)}"></div>
+      </div>
       <div class="field"><label>Products in play</label><div class="prods">${prodOpts}</div></div>
       <div class="field"><label>Situation / need</label><textarea data-f="need" placeholder="What's driving the conversation — scaling, cash-flow gap, stacked positions, acquisition…">${esc(l.need)}</textarea></div>
       <div class="field"><label>Next follow-up</label><input type="date" data-f="nextFollowUp" value="${esc(l.nextFollowUp)}"></div>
@@ -623,6 +650,9 @@ function leadBrief(l){
     `Company: ${l.company||"(unknown)"}`,
     l.contact?`Contact: ${l.contact}${l.role?", "+l.role:""}`:"",
     l.industry?`Industry: ${l.industry}`:"",
+    l.location?`Location: ${l.location}`:"",
+    l.ownership?`Time in business: ${l.ownership}`:"",
+    l.fico?`Owner FICO: ${l.fico}`:"",
     l.channel?`Channel: ${l.channel}`:"",
     (l.products||[]).length?`Products in play: ${(l.products||[]).join(", ")}`:"",
     l.dealSize?`Est. capital need: $${Number(l.dealSize).toLocaleString()}`:"",
